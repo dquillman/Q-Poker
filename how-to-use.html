@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Poker Mastery Guide</title>
+    <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #eee;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .guide-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .guide-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .guide-header h1 {
+            color: var(--gold);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .guide-section {
+            margin-bottom: 60px;
+        }
+
+        .guide-section h2 {
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .feature-card {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .feature-card img {
+            width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--gold);
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-text h3 {
+            color: var(--gold);
+            margin-bottom: 15px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: var(--gold);
+            color: #000;
+            text-decoration: none;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .feature-card {
+                flex-direction: column;
+            }
+
+            .feature-card img {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a href="index.html" class="back-btn">← Back to Game</a>
+
+    <div class="guide-container">
+        <div class="guide-header">
+            <h1>Q-Poker Mastery Guide</h1>
+            <p>Master the table with AI-powered insights and advanced training tools.</p>
+        </div>
+
+        <section class="guide-section">
+            <h2>1. The Arena</h2>
+            <div class="feature-card">
+                <img src="poker_game_interface_illustration_v1_1767114942933.png" alt="Game Interface">
+                <div class="feature-text">
+                    <h3>Premium Poker Experience</h3>
+                    <p>Q-Poker features a high-fidelity 9-player table with smooth animations and professional card
+                        mechanics. Use the command center at the bottom to control your actions: <strong>Fold</strong>,
+                        <strong>Check/Call</strong>, and <strong>Bet/Raise</strong>.
+                    </p>
+                    <p>Keep an eye on the <strong>Bankroll</strong> indicator in the header to track your career
+                        progress across multiple sessions.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="guide-section">
+            <h2>2. The Coach</h2>
+            <div class="feature-card">
+                <div class="feature-text">
+                    <h3>GTO Advisor & Equity Calculator</h3>
+                    <p>Activate <strong>Coach Mode</strong> (🎓 button) to get real-time strategic advice. The Advisor
+                        Panel calculates your <strong>Winning Equity</strong> and recommends the mathematically optimal
+                        action (GTO).</p>
+                    <p>Hover over the EV values to see exactly how much profit or loss is expected for each possible
+                        decision.</p>
+                </div>
+                <img src="poker_coach_advisor_illustration_v1_1767114963637.png" alt="Coach Mode">
+            </div>
+        </section>
+
+        <section class="guide-section">
+            <h2>3. Advanced Visualization</h2>
+            <div class="feature-card">
+                <div class="feature-text">
+                    <h3>Opponent Perceived Range</h3>
+                    <p>The <strong>Range Visualizer</strong> shows a 13x13 grid of all possible hands. As the hand
+                        progresses, the AI "filters out" hands that the opponent is unlikely to hold based on their
+                        betting patterns.</p>
+                    <p><strong>Green squares</strong> indicate highly probable hands, while <strong>Dark
+                            squares</strong> represent hands that have been narrowed out.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="guide-section">
+            <h2>4. Training Dojo</h2>
+            <div class="feature-card">
+                <div class="feature-text">
+                    <h3>Drills & Math Dojo</h3>
+                    <p>Practice specific high-pressure scenarios in <strong>Drill Mode</strong>, or sharpen your mental
+                        math in the <strong>Math Dojo</strong>. Estimate your equity against random hands to build the
+                        intuition needed for professional-level play.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="guide-section" style="text-align: center;">
+            <h2>Ready to Dominate?</h2>
+            <p>The best way to learn is to play. Put your new knowledge to the test!</p>
+            <br>
+            <a href="index.html" class="btn">Launch Game</a>
+        </section>
+    </div>
+</body>
+
+</html>

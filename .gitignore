@@ -1,0 +1,13 @@
+# Scrap Files
+reproduce_bug.js
+test.js
+test_run.js
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Workspace
+.vscode/
+.idea/
+.gemini/
