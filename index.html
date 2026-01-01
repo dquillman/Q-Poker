@@ -2025,6 +2025,13 @@
             <label>Estimated EQUITY (%):</label>
             <input type="number" id="train-equity" class="btn btn-secondary" style="background:#222; width:100px;">
           </div>
+          <div class="form-group">
+            <label>Pot Odds / Required Equity (%):</label>
+            <input type="number" id="train-pot-odds" class="btn btn-secondary" style="background:#222; width:100px;">
+            <p style="font-size: 0.7em; color: #666; margin-top: 5px;">
+              💡 <em>Hint: Call / (Pot + Call)</em>
+            </p>
+          </div>
         `;
       } else if (stepId === 'decision') {
         title.textContent = '⚡ Final Decision';
@@ -2082,6 +2089,7 @@
       } else if (stepId === 'math') {
         const userOuts = parseInt(document.getElementById('train-outs').value || 0);
         const userEquity = parseInt(document.getElementById('train-equity').value || 0);
+        const userPotOdds = parseInt(document.getElementById('train-pot-odds').value || 0);
 
         const player = game.players[0];
         // Ensure equity is calculated if it somehow isn't
@@ -2092,28 +2100,44 @@
         const outsData = game.learningEngine ? game.learningEngine.calculateOuts(player.hand, game.communityCards) : { total: 0 };
         const actualOuts = outsData.total;
 
+        // Calculate actual Pot Odds
+        const callAmount = game.currentBet - player.currentBet;
+        const potOddsRaw = callAmount > 0 ? callAmount / (game.pot + callAmount) : 0;
+        const actualPotOdds = Math.round(potOddsRaw * 100);
+
         const multiplier = (game.gamePhase === 'flop' ? 4 : 2);
         const heuristicEquity = actualOuts * multiplier;
         const matchesActual = (Math.abs(userEquity - actualEquity) <= 7);
         const matchesHeuristic = (Math.abs(userEquity - heuristicEquity) <= 7);
-        isCorrect = matchesActual || matchesHeuristic;
+        const matchesPotOdds = (Math.abs(userPotOdds - actualPotOdds) <= 5); // 5% leniency for pot odds
 
-        let tutorMsg = `<strong>Result:</strong> Actual Equity is ${actualEquity}%.<br><br>`;
+        isCorrect = (matchesActual || matchesHeuristic) && (callAmount === 0 || matchesPotOdds);
+
+        let tutorMsg = `<strong>Result:</strong><br>`;
+        tutorMsg += `• Actual Equity: ${actualEquity}%<br>`;
+        tutorMsg += `• Pot Odds: ${actualPotOdds}%<br><br>`;
+
         if (isCorrect) {
           tutorMsg += `<strong>Great job!</strong> Your estimate is within the professional margin of error. `;
           if (matchesHeuristic && !matchesActual && Math.abs(actualEquity - heuristicEquity) > 10) {
             tutorMsg += `<br><br>🎓 <strong>Tutor Tip:</strong> Your Rule of ${multiplier} math (${heuristicEquity}%) is correct! Note that your real equity is lower (${actualEquity}%) because you are in a multi-way pot or your outs are 'dirty'.`;
           } else {
-            tutorMsg += `You've mastered the Rule of 2 & 4!`;
+            tutorMsg += `You've mastered the Rule of 2 & 4 and Pot Odds!`;
           }
         } else {
           tutorMsg += `<strong>🎓 How to calculate:</strong><br>`;
           if (game.gamePhase === 'preflop') {
-            tutorMsg += `Preflop, we don't have 'outs' yet. Focus on your <strong>Hole Card Strength</strong> and the GTO Charts. Equity here is based on your cards' power against random hands.`;
+            tutorMsg += `Preflop, focus on <strong>Hole Card Strength</strong>. Equity here is based on your cards' power against random hands.`;
           } else {
             tutorMsg += `1. <strong>Count your Outs:</strong> You have ${actualOuts} cards that would give you the best hand.<br>`;
-            tutorMsg += `2. <strong>The Rule of ${multiplier}:</strong> On the ${game.gamePhase.toUpperCase()}, multiply your outs by ${multiplier}.<br>`;
-            tutorMsg += `3. <strong>Result:</strong> ${actualOuts} outs × ${multiplier} = ~${heuristicEquity}% Equity.`;
+            tutorMsg += `2. <strong>Equity:</strong> ${actualOuts} outs × ${multiplier} = ~${heuristicEquity}% Equity.<br>`;
+            tutorMsg += `3. <strong>Pot Odds:</strong> To call $${callAmount} into a $${game.pot} pot, you need ${actualPotOdds}% equity.`;
+
+            if (actualEquity >= actualPotOdds) {
+              tutorMsg += `<br><br>✔️ <strong>Verdict:</strong> Since Equity (${actualEquity}%) ≥ Pot Odds (${actualPotOdds}%), this is a mathematically profitable CALL.`;
+            } else {
+              tutorMsg += `<br><br>❌ <strong>Verdict:</strong> Since Equity (${actualEquity}%) < Pot Odds (${actualPotOdds}%), you don't have enough value to call unless you have 'Implied Odds'.`;
+            }
           }
         }
         message = tutorMsg;
