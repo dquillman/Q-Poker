@@ -2135,13 +2135,13 @@
           isCorrect = (matchesActual || matchesHeuristic) && (callAmount <= 0 || matchesPotOdds);
 
           let tutorMsg = `<strong>Result:</strong><br>`;
-          tutorMsg += `• Actual Equity: ${actualEquity}%<br>`;
-          tutorMsg += `• Pot Odds: ${actualPotOdds}%<br><br>`;
+          tutorMsg += `• Actual Equity: ${actualEquity}% (Total Win Prob)<br>`;
+          tutorMsg += `• Pot Odds: ${actualPotOdds}% (Required to Call)<br><br>`;
 
           if (isCorrect) {
             tutorMsg += `<strong>Great job!</strong> Your estimate is within the professional margin of error. `;
             if (matchesHeuristic && !matchesActual && Math.abs(actualEquity - heuristicEquity) > 10) {
-              tutorMsg += `<br><br>🎓 <strong>Tutor Tip:</strong> Your Rule of ${multiplier} math (${heuristicEquity}%) is correct! Note that your real equity is lower (${actualEquity}%) because you are in a multi-way pot or your outs are 'dirty'.`;
+              tutorMsg += `<br><br>🎓 <strong>Tutor Tip:</strong> Your Rule of ${multiplier} math (${heuristicEquity}%) is correct! Note that your real equity is higher (${actualEquity}%) because you likely <strong>already have the best hand</strong>, even before you hit your draw!`;
             } else {
               tutorMsg += `You've mastered the Rule of 2 & 4 and Pot Odds!`;
             }
@@ -2151,16 +2151,19 @@
               tutorMsg += `Preflop, focus on <strong>Hole Card Strength</strong>. Equity here is based on your cards' power against random hands.`;
             } else {
               tutorMsg += `1. <strong>Count your Outs:</strong> You have ${actualOuts} cards that would give you the best hand.<br>`;
-              tutorMsg += `2. <strong>Equity:</strong> ${actualOuts} outs × ${multiplier} = ~${heuristicEquity}% Equity.<br>`;
-              tutorMsg += `3. <strong>Pot Odds:</strong> To call $${callAmount} into a $${game.pot} pot, you need ${actualPotOdds}% equity.`;
+              tutorMsg += `2. <strong>Drawing Equity:</strong> ${actualOuts} outs × ${multiplier} = ~${heuristicEquity}% to improve.<br>`;
+              tutorMsg += `3. <strong>Total Equity (${actualEquity}%):</strong> Calculated via Monte Carlo simulation. This accounts for your drawing outs PLUS the chance you are already winning.<br>`;
+              tutorMsg += `4. <strong>Pot Odds:</strong> To call $${callAmount} into $${game.pot}, you need ${actualPotOdds}% equity.<br><br>`;
 
               if (actualEquity >= actualPotOdds) {
-                tutorMsg += `<br><br>✔️ <strong>Verdict:</strong> Since Equity (${actualEquity}%) ≥ Pot Odds (${actualPotOdds}%), this is a mathematically profitable CALL.`;
+                tutorMsg += `✔️ <strong>Verdict:</strong> Since Total Equity (${actualEquity}%) ≥ Pot Odds (${actualPotOdds}%), this is a mathematically profitable CALL.`;
               } else {
-                tutorMsg += `<br><br>❌ <strong>Verdict:</strong> Since Equity (${actualEquity}%) < Pot Odds (${actualPotOdds}%), you don't have enough value to call unless you have 'Implied Odds'.`;
+                tutorMsg += `❌ <strong>Verdict:</strong> Since Total Equity (${actualEquity}%) < Pot Odds (${actualPotOdds}%), you don't have enough value to call.`;
               }
             }
           }
+
+          tutorMsg += `<br><br><button class="submit-training-btn" style="width:100%;" onclick="showTrainingForm('decision')">➡️ Continue to Final Decision</button>`;
           message = tutorMsg;
         } else if (stepId === 'decision') {
           const selected = document.querySelector('.training-option.selected');
