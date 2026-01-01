@@ -2060,113 +2060,140 @@
     }
 
     function submitTrainingForm() {
-      const feedback = document.getElementById('trainingFeedback');
-      const stepId = currentTrainingStep;
-      let isCorrect = false;
-      let message = '';
+      try {
+        console.log("Submitting Training Form...");
+        const feedback = document.getElementById('trainingFeedback');
+        const stepId = currentTrainingStep;
 
-      if (stepId === 'position') {
-        const selected = document.querySelector('.training-option.selected');
-        if (!selected) return alert('Select an option!');
-        const val = selected.dataset.value;
-        const actual = game.getPlayerPosition(0);
-        isCorrect = (val === actual || (val === 'dealer' && actual === 'late'));
-        message = isCorrect ? `<strong>Correct!</strong> You are in the ${actual.toUpperCase()} position.` : `<strong>Not quite.</strong> You are actually in the ${actual.toUpperCase()} position. Look at your seat relative to the 'D' button!`;
-      } else if (stepId === 'preflop') {
-        const selected = document.querySelector('.training-option.selected');
-        if (!selected) return alert('Select an option!');
-        const val = selected.dataset.value;
-        const player = game.players[0];
-        const strength = game.evaluatePreFlopHand(player.hand);
-        const category = game.learningEngine.getHandCategory(player.hand);
-
-        isCorrect = (val === category);
-        if (isCorrect) {
-          message = `<strong>Spot on!</strong> This is a ${category.toUpperCase()} hand.<br><br><button class="submit-training-btn" style="width:100%;" onclick="toggleCharts()">Open GTO Opening Chart</button>`;
-        } else {
-          message = `<strong>Careful.</strong> This hand is actually ${category.toUpperCase()}.<br><br>🎓 <strong>Tutor Tip:</strong> Preflop strength is based on high-card value and 'connectedness' (like 9-10 suited). High pairs are always Premium!`;
+        if (!stepId) {
+          console.warn("No step selected");
+          return;
         }
-      } else if (stepId === 'math') {
-        const userOuts = parseInt(document.getElementById('train-outs').value || 0);
-        const userEquity = parseInt(document.getElementById('train-equity').value || 0);
-        const userPotOdds = parseInt(document.getElementById('train-pot-odds').value || 0);
 
-        const player = game.players[0];
-        // Ensure equity is calculated if it somehow isn't
-        if (player.equity === undefined && game.communityCards.length > 0) {
-          game.updatePlayerEquity();
-        }
-        const actualEquity = Math.round((player.equity || 0) * 100);
-        const outsData = game.learningEngine ? game.learningEngine.calculateOuts(player.hand, game.communityCards) : { total: 0 };
-        const actualOuts = outsData.total;
+        let isCorrect = false;
+        let message = '';
 
-        // Calculate actual Pot Odds
-        const callAmount = game.currentBet - player.currentBet;
-        const potOddsRaw = callAmount > 0 ? callAmount / (game.pot + callAmount) : 0;
-        const actualPotOdds = Math.round(potOddsRaw * 100);
+        if (stepId === 'position') {
+          const selected = document.querySelector('.training-option.selected');
+          if (!selected) return alert('Select an option!');
+          const val = selected.dataset.value;
+          const actual = game.getPlayerPosition(0);
+          isCorrect = (val === actual || (val === 'dealer' && actual === 'late'));
+          message = isCorrect ? `<strong>Correct!</strong> You are in the ${actual.toUpperCase()} position.` : `<strong>Not quite.</strong> You are actually in the ${actual.toUpperCase()} position. Look at your seat relative to the 'D' button!`;
+        } else if (stepId === 'preflop') {
+          const selected = document.querySelector('.training-option.selected');
+          if (!selected) return alert('Select an option!');
+          const val = selected.dataset.value;
+          const player = game.players[0];
+          if (!player) throw new Error("Human player not found");
 
-        const multiplier = (game.gamePhase === 'flop' ? 4 : 2);
-        const heuristicEquity = actualOuts * multiplier;
-        const matchesActual = (Math.abs(userEquity - actualEquity) <= 7);
-        const matchesHeuristic = (Math.abs(userEquity - heuristicEquity) <= 7);
-        const matchesPotOdds = (Math.abs(userPotOdds - actualPotOdds) <= 5); // 5% leniency for pot odds
+          const strength = game.evaluatePreFlopHand(player.hand);
+          const category = game.learningEngine.getHandCategory(player.hand);
 
-        isCorrect = (matchesActual || matchesHeuristic) && (callAmount === 0 || matchesPotOdds);
-
-        let tutorMsg = `<strong>Result:</strong><br>`;
-        tutorMsg += `• Actual Equity: ${actualEquity}%<br>`;
-        tutorMsg += `• Pot Odds: ${actualPotOdds}%<br><br>`;
-
-        if (isCorrect) {
-          tutorMsg += `<strong>Great job!</strong> Your estimate is within the professional margin of error. `;
-          if (matchesHeuristic && !matchesActual && Math.abs(actualEquity - heuristicEquity) > 10) {
-            tutorMsg += `<br><br>🎓 <strong>Tutor Tip:</strong> Your Rule of ${multiplier} math (${heuristicEquity}%) is correct! Note that your real equity is lower (${actualEquity}%) because you are in a multi-way pot or your outs are 'dirty'.`;
+          isCorrect = (val === category);
+          if (isCorrect) {
+            message = `<strong>Spot on!</strong> This is a ${category.toUpperCase()} hand.<br><br><button class="submit-training-btn" style="width:100%;" onclick="toggleCharts()">Open GTO Opening Chart</button>`;
           } else {
-            tutorMsg += `You've mastered the Rule of 2 & 4 and Pot Odds!`;
+            message = `<strong>Careful.</strong> This hand is actually ${category.toUpperCase()}.<br><br>🎓 <strong>Tutor Tip:</strong> Preflop strength is based on high-card value and 'connectedness' (like 9-10 suited). High pairs are always Premium!`;
           }
-        } else {
-          tutorMsg += `<strong>🎓 How to calculate:</strong><br>`;
-          if (game.gamePhase === 'preflop') {
-            tutorMsg += `Preflop, focus on <strong>Hole Card Strength</strong>. Equity here is based on your cards' power against random hands.`;
-          } else {
-            tutorMsg += `1. <strong>Count your Outs:</strong> You have ${actualOuts} cards that would give you the best hand.<br>`;
-            tutorMsg += `2. <strong>Equity:</strong> ${actualOuts} outs × ${multiplier} = ~${heuristicEquity}% Equity.<br>`;
-            tutorMsg += `3. <strong>Pot Odds:</strong> To call $${callAmount} into a $${game.pot} pot, you need ${actualPotOdds}% equity.`;
+        } else if (stepId === 'math') {
+          const outsInput = document.getElementById('train-outs');
+          const equityInput = document.getElementById('train-equity');
+          const oddsInput = document.getElementById('train-pot-odds');
 
-            if (actualEquity >= actualPotOdds) {
-              tutorMsg += `<br><br>✔️ <strong>Verdict:</strong> Since Equity (${actualEquity}%) ≥ Pot Odds (${actualPotOdds}%), this is a mathematically profitable CALL.`;
+          if (!outsInput || !equityInput || !oddsInput) {
+            throw new Error("Form inputs missing from DOM");
+          }
+
+          const userOuts = parseInt(outsInput.value || 0);
+          const userEquity = parseInt(equityInput.value || 0);
+          const userPotOdds = parseInt(oddsInput.value || 0);
+
+          const player = game.players[0];
+          if (!player) throw new Error("Human player not found");
+
+          // Ensure equity is calculated if it somehow isn't
+          if (player.equity === undefined && game.communityCards.length > 0) {
+            game.updatePlayerEquity();
+          }
+          const actualEquity = Math.round((player.equity || 0) * 100);
+          const outsData = game.learningEngine ? game.learningEngine.calculateOuts(player.hand, game.communityCards) : { total: 0 };
+          const actualOuts = outsData.total;
+
+          // Calculate actual Pot Odds
+          const callAmount = game.currentBet - player.currentBet;
+          const divisor = game.pot + callAmount;
+          const potOddsRaw = (callAmount > 0 && divisor > 0) ? callAmount / divisor : 0;
+          const actualPotOdds = Math.round(potOddsRaw * 100);
+
+          const multiplier = (game.gamePhase === 'flop' ? 4 : 2);
+          const heuristicEquity = actualOuts * multiplier;
+          const matchesActual = (Math.abs(userEquity - actualEquity) <= 7);
+          const matchesHeuristic = (Math.abs(userEquity - heuristicEquity) <= 7);
+          const matchesPotOdds = (Math.abs(userPotOdds - actualPotOdds) <= 5); // 5% leniency for pot odds
+
+          isCorrect = (matchesActual || matchesHeuristic) && (callAmount <= 0 || matchesPotOdds);
+
+          let tutorMsg = `<strong>Result:</strong><br>`;
+          tutorMsg += `• Actual Equity: ${actualEquity}%<br>`;
+          tutorMsg += `• Pot Odds: ${actualPotOdds}%<br><br>`;
+
+          if (isCorrect) {
+            tutorMsg += `<strong>Great job!</strong> Your estimate is within the professional margin of error. `;
+            if (matchesHeuristic && !matchesActual && Math.abs(actualEquity - heuristicEquity) > 10) {
+              tutorMsg += `<br><br>🎓 <strong>Tutor Tip:</strong> Your Rule of ${multiplier} math (${heuristicEquity}%) is correct! Note that your real equity is lower (${actualEquity}%) because you are in a multi-way pot or your outs are 'dirty'.`;
             } else {
-              tutorMsg += `<br><br>❌ <strong>Verdict:</strong> Since Equity (${actualEquity}%) < Pot Odds (${actualPotOdds}%), you don't have enough value to call unless you have 'Implied Odds'.`;
+              tutorMsg += `You've mastered the Rule of 2 & 4 and Pot Odds!`;
+            }
+          } else {
+            tutorMsg += `<strong>🎓 How to calculate:</strong><br>`;
+            if (game.gamePhase === 'preflop') {
+              tutorMsg += `Preflop, focus on <strong>Hole Card Strength</strong>. Equity here is based on your cards' power against random hands.`;
+            } else {
+              tutorMsg += `1. <strong>Count your Outs:</strong> You have ${actualOuts} cards that would give you the best hand.<br>`;
+              tutorMsg += `2. <strong>Equity:</strong> ${actualOuts} outs × ${multiplier} = ~${heuristicEquity}% Equity.<br>`;
+              tutorMsg += `3. <strong>Pot Odds:</strong> To call $${callAmount} into a $${game.pot} pot, you need ${actualPotOdds}% equity.`;
+
+              if (actualEquity >= actualPotOdds) {
+                tutorMsg += `<br><br>✔️ <strong>Verdict:</strong> Since Equity (${actualEquity}%) ≥ Pot Odds (${actualPotOdds}%), this is a mathematically profitable CALL.`;
+              } else {
+                tutorMsg += `<br><br>❌ <strong>Verdict:</strong> Since Equity (${actualEquity}%) < Pot Odds (${actualPotOdds}%), you don't have enough value to call unless you have 'Implied Odds'.`;
+              }
+            }
+          }
+          message = tutorMsg;
+        } else if (stepId === 'decision') {
+          const selected = document.querySelector('.training-option.selected');
+          if (!selected) return alert('Select an option!');
+          const val = selected.dataset.value;
+          const rec = game.getOptimalActionForPlayer();
+
+          if (!rec) {
+            message = "<strong>Analysis Unavailable.</strong> The Coach can only analyze your current live hand. Start a new hand or advance to your turn!";
+            isCorrect = false;
+          } else {
+            isCorrect = (val === rec.action.toLowerCase() || (val === 'bluff' && rec.action === 'raise'));
+            const explanation = rec.explanation || "No detailed explanation available.";
+            if (isCorrect) {
+              message = `<strong>Excellent choice!</strong> The GTO play is indeed ${rec.action.toUpperCase()}. ${explanation}`;
+            } else {
+              message = `<strong>The Coach disagrees.</strong> The recommendation is ${rec.action.toUpperCase()}.<br><br>🎓 <strong>Why?</strong> ${explanation}`;
             }
           }
         }
-        message = tutorMsg;
-      } else if (stepId === 'decision') {
-        const selected = document.querySelector('.training-option.selected');
-        if (!selected) return alert('Select an option!');
-        const val = selected.dataset.value;
-        const rec = game.getOptimalActionForPlayer();
 
-        if (!rec) {
-          message = "<strong>Analysis Unavailable.</strong> The Coach can only analyze your current live hand. Start a new hand or advance to your turn!";
-          isCorrect = false;
-        } else {
-          isCorrect = (val === rec.action.toLowerCase() || (val === 'bluff' && rec.action === 'raise'));
-          const explanation = rec.explanation || "No detailed explanation available.";
-          if (isCorrect) {
-            message = `<strong>Excellent choice!</strong> The GTO play is indeed ${rec.action.toUpperCase()}. ${explanation}`;
-          } else {
-            message = `<strong>The Coach disagrees.</strong> The recommendation is ${rec.action.toUpperCase()}.<br><br>🎓 <strong>Why?</strong> ${explanation}`;
-          }
+        if (feedback) {
+          feedback.innerHTML = message;
+          feedback.style.display = 'block';
+          feedback.className = `feedback-area ${isCorrect ? 'correct' : 'incorrect'}`;
         }
+
+        if (isCorrect && window.soundManager) soundManager.playWinner();
+        else if (window.soundManager) soundManager.playCheck();
+      } catch (err) {
+        console.error("Training Form Error:", err);
+        alert("Training Error: " + err.message);
       }
-
-      feedback.innerHTML = message;
-      feedback.style.display = 'block'; // Ensure feedback is visible
-      feedback.className = `feedback-area ${isCorrect ? 'correct' : 'incorrect'}`;
-
-      if (isCorrect && window.soundManager) soundManager.playWinner();
-      else if (window.soundManager) soundManager.playCheck();
     }
   </script>
 </body>

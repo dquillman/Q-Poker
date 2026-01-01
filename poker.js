@@ -2,7 +2,7 @@
 
 class PokerGame {
   constructor() {
-    this.version = '2.0.7';
+    this.version = '2.0.8';
     this.deck = [];
     this.players = [];
     this.communityCards = [];
